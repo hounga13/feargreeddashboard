@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fear & Greed Index Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Chart.js 라이브러리 로드 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Fear & Greed Index</h1>
+        </header>
+
+        <nav>
+            <button id="overview-btn" class="active">Overview</button>
+            <button id="timeline-btn">Timeline</button>
+        </nav>
+
+        <main>
+            <!-- 계기판이 표시될 섹션 -->
+            <section id="overview-section" class="content active">
+                <canvas id="fearGreedGauge"></canvas>
+            </section>
+            <!-- 타임라인 차트가 표시될 섹션 -->
+            <section id="timeline-section" class="content">
+                <canvas id="fearGreedTimeline"></canvas>
+            </section>
+        </main>
+
+        <section class="news-section">
+            <h2>Market News</h2>
+            <div id="news-container">
+                <!-- 뉴스가 동적으로 추가될 공간 -->
+            </div>
+        </section>
+    </div>
+    <script src="js/main.js"></script>
+</body>
+</html>
