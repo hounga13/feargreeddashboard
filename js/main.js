@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const timelineBtn = document.getElementById('timeline-btn');
     const overviewSection = document.getElementById('overview-section');
     const timelineSection = document.getElementById('timeline-section');
+    const historicalDataSection = document.getElementById('historical-data-section'); // New element
 
     // 탭 전환 이벤트 리스너 설정
     overviewBtn.addEventListener('click', () => {
@@ -17,12 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function switchTab(tabName) {
         // 모든 탭과 콘텐츠에서 active 클래스 제거
         [overviewBtn, timelineBtn].forEach(btn => btn.classList.remove('active'));
-        [overviewSection, timelineSection].forEach(section => section.classList.remove('active'));
+        [overviewSection, timelineSection, historicalDataSection].forEach(section => section.classList.remove('active')); // Updated
 
         // 선택된 탭과 콘텐츠에 active 클래스 추가
         if (tabName === 'overview') {
             overviewBtn.classList.add('active');
             overviewSection.classList.add('active');
+            historicalDataSection.classList.add('active'); // Show historical data with overview
         } else {
             timelineBtn.classList.add('active');
             timelineSection.classList.add('active');
@@ -42,6 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 2. Timeline 차트 그리기 (과거 데이터 사용)
             renderTimeline(data);
+
+            // 3. Historical Data 렌더링
+            renderHistoricalData(data); // New call
 
         } catch (error) {
             console.error('Failed to fetch Fear & Greed data:', error);
@@ -226,6 +231,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+    }
+
+    function renderHistoricalData(data) {
+        const container = document.getElementById('historical-data-container');
+        container.innerHTML = ''; // Clear existing content
+
+        if (!data || data.length === 0) {
+            container.innerHTML = '<p>Historical data not available.</p>';
+            return;
+        }
+
+        // Helper to find data for a specific number of days ago
+        const findDataByDaysAgo = (days) => {
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() - days);
+            // Find the closest data point
+            return data.reduce((prev, curr) => {
+                const currDate = new Date(curr.timestamp * 1000);
+                return (Math.abs(currDate - targetDate) < Math.abs(new Date(prev.timestamp * 1000) - targetDate) ? curr : prev);
+            });
+        };
+
+        const historicalPoints = [
+            { label: 'Previous Close', data: data[0] }, // Assuming data[0] is always the latest
+            { label: '1 Day Ago', data: findDataByDaysAgo(1) },
+            { label: '1 Week Ago', data: findDataByDaysAgo(7) },
+            { label: '1 Month Ago', data: findDataByDaysAgo(30) }
+        ];
+
+        const ul = document.createElement('ul');
+        historicalPoints.forEach(point => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${point.label}:</strong> ${point.data.value} (${point.data.value_classification})`;
+            ul.appendChild(li);
+        });
+        container.appendChild(ul);
     }
 
     function renderNews(articles) {
