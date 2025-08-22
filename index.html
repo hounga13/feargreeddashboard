@@ -23,10 +23,27 @@
             <!-- 계기판이 표시될 섹션 -->
             <section id="overview-section" class="content active">
                 <canvas id="fearGreedGauge"></canvas>
+                <div id="gauge-explanation" class="explanation-box">
+                    <h3>What the numbers mean:</h3>
+                    <ul>
+                        <li style="color: #FF4500;">0-24: Extreme Fear</li>
+                        <li style="color: #FF8C00;">25-44: Fear</li>
+                        <li style="color: #FFD700;">45-55: Neutral</li>
+                        <li style="color: #ADFF2F;">56-75: Greed</li>
+                        <li style="color: #32CD32;">76-100: Extreme Greed</li>
+                    </ul>
+                </div>
             </section>
             <!-- 타임라인 차트가 표시될 섹션 -->
             <section id="timeline-section" class="content">
                 <canvas id="fearGreedTimeline"></canvas>
+            </section>
+
+            <section id="historical-data-section" class="content active">
+                <h2>Historical Data</h2>
+                <div id="historical-data-container">
+                    <!-- Historical data will be dynamically added here -->
+                </div>
             </section>
         </main>
 
