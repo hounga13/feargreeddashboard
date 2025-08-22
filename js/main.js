@@ -70,23 +70,192 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderGauge(latestData) {
         const ctx = document.getElementById('fearGreedGauge').getContext('2d');
-        // TODO: Chart.js를 사용하여 반원 모양의 계기판(Doughnut 차트)을 그리는 코드 작성
-        // 예: new Chart(ctx, { type: 'doughnut', ... });
-        console.log('Render Gauge with data:', latestData);
+        // Destroy existing chart if it exists to prevent multiple charts on same canvas
+        if (window.fearGreedGaugeChart) {
+            window.fearGreedGaugeChart.destroy();
+        }
+
+        const value = parseInt(latestData.value);
+        const sentiment = latestData.value_classification;
+
+        // Define colors for different sentiment ranges
+        const colors = {
+            'Extreme Fear': '#FF4500', // OrangeRed
+            'Fear': '#FF8C00',       // DarkOrange
+            'Neutral': '#FFD700',    // Gold
+            'Greed': '#ADFF2F',      // GreenYellow
+            'Extreme Greed': '#32CD32' // LimeGreen
+        };
+
+        const backgroundColor = [
+            colors['Extreme Fear'],
+            colors['Fear'],
+            colors['Neutral'],
+            colors['Greed'],
+            colors['Extreme Greed']
+        ];
+
+        // Calculate the segment for the current value
+        // Each sentiment covers 20 points (100 / 5 sentiments)
+        const data = [20, 20, 20, 20, 20]; // Each segment represents 20 points
+
+        // Highlight the current sentiment segment
+        const currentSentimentIndex = Object.keys(colors).indexOf(sentiment);
+        const segmentColors = backgroundColor.map((color, index) => 
+            index === currentSentimentIndex ? color : '#E0E0E0' // Grey out other segments
+        );
+
+        window.fearGreedGaugeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Extreme Fear', 'Fear', 'Neutral', 'Greed', 'Extreme Greed'],
+                datasets: [{
+                    data: data,
+                    backgroundColor: segmentColors,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                rotation: 270, // Start from the bottom-left
+                circumference: 180, // Half circle
+                cutout: '80%', // Thickness of the doughnut
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: false // Disable tooltips
+                    }
+                },
+                elements: {
+                    arc: {
+                        roundedCornersFor: 0 // No rounded corners
+                    }
+                }
+            },
+            plugins: [{
+                id: 'textCenter',
+                beforeDraw: function(chart) {
+                    const width = chart.width,
+                        height = chart.height,
+                        ctx = chart.ctx;
+
+                    ctx.restore();
+                    const fontSize = (height / 114).toFixed(2);
+                    ctx.font = "bold " + fontSize + "em sans-serif";
+                    ctx.textBaseline = "middle";
+
+                    const text = value;
+                    const textX = Math.round((width - ctx.measureText(text).width) / 2);
+                    const textY = height / 1.4; // Adjust position for semi-circle
+
+                    ctx.fillText(text, textX, textY);
+                    ctx.save();
+
+                    const sentimentFontSize = (height / 160).toFixed(2);
+                    ctx.font = sentimentFontSize + "em sans-serif";
+                    const sentimentText = sentiment;
+                    const sentimentTextX = Math.round((width - ctx.measureText(sentimentText).width) / 2);
+                    const sentimentTextY = height / 1.2; // Adjust position for semi-circle
+
+                    ctx.fillText(sentimentText, sentimentTextX, sentimentTextY);
+                    ctx.save();
+                }
+            }]
+        });
     }
 
     function renderTimeline(historicalData) {
         const ctx = document.getElementById('fearGreedTimeline').getContext('2d');
-        // TODO: Chart.js를 사용하여 선 차트(Line 차트)를 그리는 코드 작성
-        // 예: new Chart(ctx, { type: 'line', ... });
-        console.log('Render Timeline with data:', historicalData);
+        // Destroy existing chart if it exists to prevent multiple charts on same canvas
+        if (window.fearGreedTimelineChart) {
+            window.fearGreedTimelineChart.destroy();
+        }
+
+        // Sort data by timestamp in ascending order for chronological display
+        historicalData.sort((a, b) => a.timestamp - b.timestamp);
+
+        const labels = historicalData.map(item => {
+            const date = new Date(item.timestamp * 1000); // Convert Unix timestamp to Date object
+            return date.toLocaleDateString('ko-KR'); // Format date for display
+        });
+        const values = historicalData.map(item => parseInt(item.value));
+
+        window.fearGreedTimelineChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Fear & Greed Index',
+                    data: values,
+                    borderColor: '#1a237e',
+                    backgroundColor: 'rgba(26, 35, 126, 0.2)',
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Index Value'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
     }
 
     function renderNews(articles) {
         const container = document.getElementById('news-container');
-        container.innerHTML = ''; // 기존 콘텐츠 초기화
-        // TODO: 각 기사(article)에 대해 썸네일, 제목, 링크를 포함한 HTML 요소를 만들어 container에 추가
-        console.log('Render News with articles:', articles);
+        container.innerHTML = ''; // Clear existing content
+
+        if (!articles || articles.length === 0) {
+            container.innerHTML = '<p>뉴스를 불러올 수 없습니다.</p>';
+            return;
+        }
+
+        articles.forEach(article => {
+            const newsItem = document.createElement('a');
+            newsItem.href = article.url;
+            newsItem.target = '_blank'; // Open in new tab
+            newsItem.classList.add('news-item');
+
+            const thumbnail = document.createElement('img');
+            thumbnail.src = article.urlToImage || 'https://via.placeholder.com/150?text=No+Image'; // Placeholder if no image
+            thumbnail.alt = article.title;
+            thumbnail.classList.add('news-thumbnail');
+
+            const title = document.createElement('h3');
+            title.classList.add('news-title');
+            title.textContent = article.title;
+
+            newsItem.appendChild(thumbnail);
+            newsItem.appendChild(title);
+            container.appendChild(newsItem);
+        });
     }
 
     // 앱 초기화
