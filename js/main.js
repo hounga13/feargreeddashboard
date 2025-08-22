@@ -132,6 +132,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     tooltip: {
                         enabled: false // Disable tooltips
+                    },
+                    datalabels: {
+                        color: '#fff',
+                        font: {
+                            weight: 'bold'
+                        },
+                        formatter: (value, context) => {
+                            // Only show labels for the segments themselves, not the center text
+                            return context.chart.data.labels[context.dataIndex];
+                        },
+                        anchor: 'end',
+                        align: 'end',
+                        offset: 8,
+                        textAlign: 'center',
+                        display: 'auto'
                     }
                 },
                 elements: {
@@ -140,7 +155,76 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             },
-            plugins: [{
+            plugins: [ChartDataLabels, {
+                id: 'gaugeNeedle',
+                afterDraw: function(chart) {
+                    const { ctx, chartArea: { left, top, right, bottom, width, height } } = chart;
+                    ctx.save();
+
+                    const centerX = (left + right) / 2;
+                    const centerY = (top + bottom) / 2 + (height / 2); // Adjust for semi-circle
+                    const radius = Math.min(width, height) / 2 * 0.8; // Adjust radius for needle
+
+                    // Draw the needle
+                    const angle = Math.PI + (value / 100) * Math.PI; // 0-100 maps to 180 degrees (PI to 2PI)
+                    const x = centerX + radius * Math.cos(angle);
+                    const y = centerY + radius * Math.sin(angle);
+
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(x, y);
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+
+                    // Draw the needle base (circle)
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#333';
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }, {
+                id: 'gaugeTicks',
+                afterDraw: function(chart) {
+                    const { ctx, chartArea: { left, top, right, bottom, width, height } } = chart;
+                    ctx.save();
+
+                    const centerX = (left + right) / 2;
+                    const centerY = (top + bottom) / 2 + (height / 2); // Adjust for semi-circle
+                    const outerRadius = Math.min(width, height) / 2;
+                    const innerRadius = outerRadius * 0.9; // For ticks
+
+                    // Draw ticks (0, 20, 40, 60, 80, 100)
+                    for (let i = 0; i <= 100; i += 20) {
+                        const angle = Math.PI + (i / 100) * Math.PI; // Map 0-100 to 180 degrees
+                        const xOuter = centerX + outerRadius * Math.cos(angle);
+                        const yOuter = centerY + outerRadius * Math.sin(angle);
+                        const xInner = centerX + innerRadius * Math.cos(angle);
+                        const yInner = centerY + innerRadius * Math.sin(angle);
+
+                        ctx.beginPath();
+                        ctx.moveTo(xInner, yInner);
+                        ctx.lineTo(xOuter, yOuter);
+                        ctx.strokeStyle = '#666';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+
+                        // Draw tick labels
+                        ctx.font = '12px sans-serif';
+                        ctx.fillStyle = '#333';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+
+                        const labelRadius = outerRadius * 0.8; // Position labels slightly inside ticks
+                        const xLabel = centerX + labelRadius * Math.cos(angle);
+                        const yLabel = centerY + labelRadius * Math.sin(angle);
+
+                        ctx.fillText(i.toString(), xLabel, yLabel);
+                    }
+                    ctx.restore();
+                }
+            }, {
                 id: 'textCenter',
                 beforeDraw: function(chart) {
                     const width = chart.width,
@@ -172,6 +256,160 @@ document.addEventListener('DOMContentLoaded', () => {
             }]
         });
     }
+
+    function renderTimeline(historicalData) {
+        const ctx = document.getElementById('fearGreedTimeline').getContext('2d');
+        // Destroy existing chart if it exists to prevent multiple charts on same canvas
+        if (window.fearGreedTimelineChart) {
+            window.fearGreedTimelineChart.destroy();
+        }
+
+        // Sort data by timestamp in ascending order for chronological display
+        historicalData.sort((a, b) => a.timestamp - b.timestamp);
+
+        const labels = historicalData.map(item => {
+            const date = new Date(item.timestamp * 1000); // Convert Unix timestamp to Date object
+            return date.toLocaleDateString('ko-KR'); // Format date for display
+        });
+        const values = historicalData.map(item => parseInt(item.value));
+
+        window.fearGreedTimelineChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Fear & Greed Index',
+                    data: values,
+                    borderColor: '#1a237e',
+                    backgroundColor: 'rgba(26, 35, 126, 0.2)',
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Index Value'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+    }
+
+    function renderHistoricalData(data) {
+        const container = document.getElementById('historical-data-container');
+        container.innerHTML = ''; // Clear existing content
+
+        if (!data || data.length === 0) {
+            container.innerHTML = '<p>Historical data not available.</p>';
+            return;
+        }
+
+        // Helper to find data for a specific number of days ago
+        const findDataByDaysAgo = (days) => {
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() - days);
+            targetDate.setHours(0, 0, 0, 0); // Normalize to start of day
+
+            let closestData = null;
+            let minDiff = Infinity;
+
+            data.forEach(item => {
+                const itemDate = new Date(item.timestamp * 1000);
+                itemDate.setHours(0, 0, 0, 0); // Normalize to start of day
+
+                const diff = Math.abs(itemDate.getTime() - targetDate.getTime());
+
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestData = item;
+                }
+            });
+            return closestData;
+        };
+
+        const historicalPoints = [
+            { label: 'Previous Close', data: data[0] }, // Assuming data[0] is always the latest
+            { label: '1 Day Ago', data: findDataByDaysAgo(1) },
+            { label: '1 Week Ago', data: findDataByDaysAgo(7) },
+            { label: '1 Month Ago', data: findDataByDaysAgo(30) }
+        ];
+
+        historicalPoints.forEach(point => {
+            if (point.data) {
+                const div = document.createElement('div');
+                div.classList.add('historical-item');
+                div.innerHTML = `
+                    <strong>${point.label}</strong>
+                    <div class="historical-value">${point.data.value}</div>
+                    <div class="historical-sentiment">(${point.data.value_classification})</div>
+                `;
+                container.appendChild(div);
+            }
+        });
+    }
+
+    function renderNews(articles) {
+        const container = document.getElementById('news-container');
+        container.innerHTML = ''; // Clear existing content
+
+        if (!articles || articles.length === 0) {
+            container.innerHTML = '<p>뉴스를 불러올 수 없습니다.</p>';
+            return;
+        }
+
+        articles.forEach(article => {
+            const newsItem = document.createElement('a');
+            newsItem.href = article.url;
+            newsItem.target = '_blank'; // Open in new tab
+            newsItem.classList.add('news-item');
+
+            const thumbnail = document.createElement('img');
+            thumbnail.src = article.urlToImage || 'https://via.placeholder.com/150?text=No+Image'; // Placeholder if no image
+            thumbnail.alt = article.title;
+            thumbnail.classList.add('news-thumbnail');
+
+            const title = document.createElement('h3');
+            title.classList.add('news-title');
+            title.textContent = article.title;
+
+            newsItem.appendChild(thumbnail);
+            newsItem.appendChild(title);
+            container.appendChild(newsItem);
+        });
+    }
+
+    // 앱 초기화
+    function init() {
+        fetchFearAndGreedData();
+        fetchNewsData();
+        switchTab('overview'); // 기본으로 Overview 탭을 활성화
+    }
+
+    init();
+});
 
     function renderTimeline(historicalData) {
         const ctx = document.getElementById('fearGreedTimeline').getContext('2d');
