@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 circumference: 180, // Half circle
                 cutout: '80%', // Thickness of the doughnut
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true, // Maintain aspect ratio
                 plugins: {
                     legend: {
                         display: false
@@ -148,7 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx = chart.ctx;
 
                     ctx.restore();
-                    const fontSize = (height / 114).toFixed(2);
+                    // Use a fixed font size or one relative to a known dimension
+                    const fontSize = Math.min(width, height) / 80; // Adjust as needed
                     ctx.font = "bold " + fontSize + "em sans-serif";
                     ctx.textBaseline = "middle";
 
@@ -159,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.fillText(text, textX, textY);
                     ctx.save();
 
-                    const sentimentFontSize = (height / 160).toFixed(2);
+                    const sentimentFontSize = Math.min(width, height) / 120; // Adjust as needed
                     ctx.font = sentimentFontSize + "em sans-serif";
                     const sentimentText = sentiment;
                     const sentimentTextX = Math.round((width - ctx.measureText(sentimentText).width) / 2);
@@ -246,11 +247,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const findDataByDaysAgo = (days) => {
             const targetDate = new Date();
             targetDate.setDate(targetDate.getDate() - days);
-            // Find the closest data point
-            return data.reduce((prev, curr) => {
-                const currDate = new Date(curr.timestamp * 1000);
-                return (Math.abs(currDate - targetDate) < Math.abs(new Date(prev.timestamp * 1000) - targetDate) ? curr : prev);
+            targetDate.setHours(0, 0, 0, 0); // Normalize to start of day
+
+            let closestData = null;
+            let minDiff = Infinity;
+
+            data.forEach(item => {
+                const itemDate = new Date(item.timestamp * 1000);
+                itemDate.setHours(0, 0, 0, 0); // Normalize to start of day
+
+                const diff = Math.abs(itemDate.getTime() - targetDate.getTime());
+
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestData = item;
+                }
             });
+            return closestData;
         };
 
         const historicalPoints = [
@@ -260,13 +273,18 @@ document.addEventListener('DOMContentLoaded', () => {
             { label: '1 Month Ago', data: findDataByDaysAgo(30) }
         ];
 
-        const ul = document.createElement('ul');
         historicalPoints.forEach(point => {
-            const li = document.createElement('li');
-            li.innerHTML = `<strong>${point.label}:</strong> ${point.data.value} (${point.data.value_classification})`;
-            ul.appendChild(li);
+            if (point.data) {
+                const div = document.createElement('div');
+                div.classList.add('historical-item');
+                div.innerHTML = `
+                    <strong>${point.label}</strong>
+                    <div class="historical-value">${point.data.value}</div>
+                    <div class="historical-sentiment">(${point.data.value_classification})</div>
+                `;
+                container.appendChild(div);
+            }
         });
-        container.appendChild(ul);
     }
 
     function renderNews(articles) {
