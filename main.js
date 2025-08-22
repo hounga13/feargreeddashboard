@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 뉴스 데이터 가져오기 및 렌더링
     async function fetchNewsData() {
         // 중요: '<YOUR_API_KEY>'를 실제 NewsAPI에서 발급받은 키로 교체해야 합니다.
-        const apiKey = '18f5413949f4437f860fdbfa07bda694'; // ⬅️ 본인의 NewsAPI 키를 여기에 입력하세요!
+        const apiKey = '__NEWS_API_KEY__'; // ⬅️ GitHub Actions가 이 부분을 교체할 것입니다.
         const url = `https://newsapi.org/v2/top-headlines?country=us&category=business&pageSize=3&apiKey=${apiKey}`;
 
         try {
@@ -68,112 +68,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Chart.js 중앙 텍스트 플러그인
-    const gaugeTextPlugin = {
-        id: 'gaugeText',
-        afterDraw(chart) {
-            const { ctx, data, chartArea: { top } } = chart;
-            const score = data.datasets[0].data[0];
-            const classification = data.datasets[0].label;
-
-            ctx.save();
-            ctx.font = 'bold 36px sans-serif';
-            ctx.fillStyle = data.datasets[0].backgroundColor[0];
-            ctx.textAlign = 'center';
-            ctx.fillText(score, chart.getDatasetMeta(0).data[0].x, top + 80);
-
-            ctx.font = 'normal 18px sans-serif';
-            ctx.fillStyle = '#555';
-            ctx.fillText(classification, chart.getDatasetMeta(0).data[0].x, top + 110);
-            ctx.restore();
-        }
-    };
-
     function renderGauge(latestData) {
         const ctx = document.getElementById('fearGreedGauge').getContext('2d');
-        const value = parseInt(latestData.value);
-        const classification = latestData.value_classification;
-
-        const gaugeColor = (val) => {
-            if (val <= 25) return '#d32f2f'; // Extreme Fear
-            if (val <= 45) return '#ff9800'; // Fear
-            if (val <= 55) return '#ffeb3b'; // Neutral
-            if (val <= 75) return '#8bc34a'; // Greed
-            return '#4caf50'; // Extreme Greed
-        };
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Fear & Greed', ''],
-                datasets: [{
-                    label: classification,
-                    data: [value, 100 - value],
-                    backgroundColor: [gaugeColor(value), '#f0f2f5'],
-                    borderColor: ['#fff', 'transparent'],
-                    borderWidth: 2,
-                    circumference: 180,
-                    rotation: -90,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 2,
-                cutout: '60%',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false },
-                }
-            },
-            plugins: [gaugeTextPlugin]
-        });
+        // TODO: Chart.js를 사용하여 반원 모양의 계기판(Doughnut 차트)을 그리는 코드 작성
+        // 예: new Chart(ctx, { type: 'doughnut', ... });
+        console.log('Render Gauge with data:', latestData);
     }
 
     function renderTimeline(historicalData) {
         const ctx = document.getElementById('fearGreedTimeline').getContext('2d');
-        const reversedData = historicalData.slice().reverse(); // 시간 순으로 정렬
-
-        const labels = reversedData.map(d => {
-            const date = new Date(d.timestamp * 1000);
-            return `${date.getMonth() + 1}/${date.getDate()}`;
-        });
-        const values = reversedData.map(d => d.value);
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Fear & Greed Index',
-                    data: values,
-                    borderColor: '#1a237e',
-                    backgroundColor: 'rgba(26, 35, 126, 0.1)',
-                    fill: true,
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-            }
-        });
+        // TODO: Chart.js를 사용하여 선 차트(Line 차트)를 그리는 코드 작성
+        // 예: new Chart(ctx, { type: 'line', ... });
+        console.log('Render Timeline with data:', historicalData);
     }
 
     function renderNews(articles) {
         const container = document.getElementById('news-container');
         container.innerHTML = ''; // 기존 콘텐츠 초기화
-        articles.forEach(article => {
-            const newsItem = document.createElement('a');
-            newsItem.href = article.url;
-            newsItem.target = '_blank'; // 새 탭에서 열기
-            newsItem.className = 'news-item';
-            newsItem.innerHTML = `
-                <img src="${article.urlToImage || 'https://via.placeholder.com/400x200.png?text=No+Image'}" alt="News thumbnail" class="news-thumbnail">
-                <h3 class="news-title">${article.title}</h3>
-            `;
-            container.appendChild(newsItem);
-        });
+        // TODO: 각 기사(article)에 대해 썸네일, 제목, 링크를 포함한 HTML 요소를 만들어 container에 추가
+        console.log('Render News with articles:', articles);
     }
 
     // 앱 초기화

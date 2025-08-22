@@ -1,0 +1,32 @@
+# GitHub Actions 워크플로우 이름
+name: Deploy to GitHub Pages
+
+# 이 워크플로우가 언제 실행될지 정의
+on:
+  # main 브랜치에 push 이벤트가 발생했을 때 실행
+  push:
+    branches:
+      - main
+
+# 실행될 작업(job)들
+jobs:
+  build-and-deploy:
+    # 작업이 실행될 환경
+    runs-on: ubuntu-latest
+    # 작업의 단계(step)들
+    steps:
+      # 1. 저장소의 코드를 runner로 가져옴 (체크아웃)
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # 2. js/main.js 파일의 __NEWS_API_KEY__를 GitHub Secret 값으로 교체
+      - name: Replace API Key
+        run: |
+          sed -i "s|__NEWS_API_KEY__|${{ secrets.NEWS_API_KEY }}|g" js/main.js
+
+      # 3. 수정된 코드를 gh-pages 브랜치에 배포
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./ # 프로젝트 루트 디렉토리를 배포
