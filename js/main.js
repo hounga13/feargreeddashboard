@@ -149,8 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     ctx.restore();
                     // Use a fixed font size or one relative to a known dimension
-                    const fontSize = Math.min(width, height) / 80; // Adjust as needed
-                    ctx.font = "bold " + fontSize + "em sans-serif";
+                    const fontSize = 40; // Fixed font size in pixels
+                    ctx.font = "bold " + fontSize + "px sans-serif";
                     ctx.textBaseline = "middle";
 
                     const text = value;
@@ -160,8 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.fillText(text, textX, textY);
                     ctx.save();
 
-                    const sentimentFontSize = Math.min(width, height) / 120; // Adjust as needed
-                    ctx.font = sentimentFontSize + "em sans-serif";
+                    const sentimentFontSize = 20; // Fixed font size in pixels
+                    ctx.font = sentimentFontSize + "px sans-serif";
                     const sentimentText = sentiment;
                     const sentimentTextX = Math.round((width - ctx.measureText(sentimentText).width) / 2);
                     const sentimentTextY = height / 1.2; // Adjust position for semi-circle
