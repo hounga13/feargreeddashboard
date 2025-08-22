@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Chart.js DataLabels 플러그인 등록
+    Chart.register(ChartDataLabels);
+
     // 탭 버튼 및 콘텐츠 섹션 요소 가져오기
     const overviewBtn = document.getElementById('overview-btn');
     const timelineBtn = document.getElementById('timeline-btn');
@@ -257,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // renderTimeline 함수를 DOMContentLoaded 스코프 안으로 이동
     function renderTimeline(historicalData) {
         const ctx = document.getElementById('fearGreedTimeline').getContext('2d');
         // Destroy existing chart if it exists to prevent multiple charts on same canvas
@@ -318,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // renderHistoricalData 함수를 DOMContentLoaded 스코프 안으로 이동
     function renderHistoricalData(data) {
         const container = document.getElementById('historical-data-container');
         container.innerHTML = ''; // Clear existing content
@@ -371,6 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // renderNews 함수를 DOMContentLoaded 스코프 안으로 이동
     function renderNews(articles) {
         const container = document.getElementById('news-container');
         container.innerHTML = ''; // Clear existing content
