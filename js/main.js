@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const centerX = (left + right) / 2;
                     const centerY = (top + bottom) / 2 + (height / 2); // Adjust for semi-circle
-                    const radius = Math.min(width, height) / 2 * 2; // Adjust radius for needle
+                    const radius = Math.min(width, height) / 2 * 2.0; // Adjust radius for needle
 
                     // Draw the needle
                     const angle = Math.PI + (value / 100) * Math.PI; // 0-100 maps to 180 degrees (PI to 2PI)
