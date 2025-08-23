@@ -129,6 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 cutout: '80%', // Thickness of the doughnut
                 responsive: true,
                 maintainAspectRatio: true, // Maintain aspect ratio
+                layout: {
+                    padding: {
+                        bottom: 20
+                    }
+                },
                 plugins: {
                     legend: {
                         display: false
@@ -166,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const centerX = (left + right) / 2;
                     const centerY = (top + bottom) / 2 + (height / 2); // Adjust for semi-circle
-                    const radius = Math.min(width, height) / 2 * 0.8; // Adjust radius for needle
+                    const radius = Math.min(width, height) / 2 * 0.9; // Adjust radius for needle
 
                     // Draw the needle
                     const angle = Math.PI + (value / 100) * Math.PI; // 0-100 maps to 180 degrees (PI to 2PI)
@@ -219,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
 
-                        const labelRadius = outerRadius * 0.8; // Position labels slightly inside ticks
+                        const labelRadius = outerRadius * 0.85; // Position labels slightly inside ticks
                         const xLabel = centerX + labelRadius * Math.cos(angle);
                         const yLabel = centerY + labelRadius * Math.sin(angle);
 
